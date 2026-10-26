@@ -62,7 +62,9 @@ function validateQuestions(a) {
 }
 
 async function callGemini(apiKey, prompt) {
-  const model = Netlify.env.get("GEMINI_MODEL") || "gemini-3.5-flash-lite";
+  const model = Netlify.env.get("GEMINI_MODEL") || "gemini-3.5-flash";
+  const tb = Netlify.env.get("GEMINI_THINKING_BUDGET"); // optional: set "0" on gemini-2.5-flash for faster replies
+  const thinking = tb && Number.isInteger(Number(tb)) ? { thinkingConfig: { thinkingBudget: Number(tb) } } : {};
   let res;
   try {
     res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
@@ -71,7 +73,7 @@ async function callGemini(apiKey, prompt) {
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYSTEM }] },
         contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: "application/json", temperature: 0.7 },
+        generationConfig: { responseMimeType: "application/json", temperature: 0.7, ...thinking },
       }),
       signal: AbortSignal.timeout(23000),
     });

@@ -21,3 +21,5 @@ PAYLOAD_TOO_LARGE 413, RATE_LIMITED 429, SERVER_NOT_CONFIGURED 500, UPSTREAM_ERR
 
 ## If exams time out
 Netlify's default function timeout is 10s. Raise it to 26s: Site settings → Functions → timeout.
+
+Optional speed-up: set GEMINI_THINKING_BUDGET=0 (only for gemini-2.5-flash).

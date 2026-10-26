@@ -439,6 +439,10 @@
                 <div id="questions-list-wrapper" class="space-y-6">
                     <!-- Dynamic 50 Questions injected here -->
                 </div>
+                <div id="more-loading" class="hidden bg-white rounded-2xl border border-slate-200 p-4 text-center text-sm text-slate-500 flex items-center justify-center gap-3">
+                    <div class="animate-spin rounded-full h-5 w-5 border-2 border-emerald-600 border-t-transparent"></div>
+                    <span>আরও প্রশ্ন লোড হচ্ছে...</span>
+                </div>
 
                 <!-- Bottom Floating Submit Bar -->
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 flex justify-between items-center card-shadow">
@@ -549,7 +553,10 @@
             userAnswers: {},
             examTimer: null,
             timeRemainingSec: 35 * 60, // 35 Minutes
-            examMeta: { subject: '', topic: '' }
+            examMeta: { subject: '', topic: '' },
+            examSession: 0,
+            expectedTotal: 50,
+            loadingMore: false
         };
 
         // Standard Subject to Keywords Map for Validation
@@ -806,21 +813,49 @@
             document.getElementById('exam-result-container').classList.add('hidden');
 
             try {
-                const settled = await Promise.allSettled([1, 2, 3, 4, 5].map(batch => callAI('exam', { subject, topic, batch })));
+                const session = ++APP_STATE.examSession;
                 const seen = new Set();
-                const questions = settled.filter(s => s.status === 'fulfilled').flatMap(s => s.value)
-                    .filter(q => !seen.has(q.question) && seen.add(q.question))
-                    .map((q, i) => ({ ...q, id: i + 1 }));
-                if (questions.length < 25) {
-                    const why = settled.find(s => s.status === 'rejected');
-                    throw new Error(why ? why.reason.message : 'Invalid questions format returned');
-                }
-                if (questions.length < 50) showToast(`${toBengaliNumerals(questions.length)} টি প্রশ্ন তৈরি হয়েছে (বাকিগুলো পাওয়া যায়নি)।`, 'warning');
-
-                APP_STATE.examQuestions = questions;
+                APP_STATE.examQuestions = [];
                 APP_STATE.userAnswers = {};
-                
-                startExamUI();
+                APP_STATE.expectedTotal = 50;
+                APP_STATE.loadingMore = true;
+                let started = false, failures = 0, pending = 5, lastErr = null;
+
+                const addBatch = (qs) => {
+                    if (session !== APP_STATE.examSession) return; // exam already submitted/restarted
+                    const from = APP_STATE.examQuestions.length;
+                    qs.filter(q => !seen.has(q.question) && seen.add(q.question))
+                      .forEach(q => APP_STATE.examQuestions.push({ ...q, id: APP_STATE.examQuestions.length + 1 }));
+                    if (!started) {
+                        started = true;
+                        startExamUI();
+                        document.getElementById('more-loading').classList.remove('hidden');
+                    } else {
+                        renderExamQuestions(from);
+                    }
+                    updateUnansweredCounter();
+                };
+                const finishLoading = () => {
+                    if (session !== APP_STATE.examSession) return;
+                    APP_STATE.loadingMore = false;
+                    document.getElementById('more-loading').classList.add('hidden');
+                    const n = APP_STATE.examQuestions.length;
+                    if (n > 0) {
+                        APP_STATE.expectedTotal = n;
+                        updateUnansweredCounter();
+                        if (n < 50) showToast(`${toBengaliNumerals(n)} টি প্রশ্ন তৈরি হয়েছে (বাকিগুলো পাওয়া যায়নি)।`, 'warning');
+                    }
+                };
+
+                // 5 requests of 10 questions run in parallel; the exam opens when the FIRST one arrives
+                await new Promise((resolve, reject) => {
+                    [1, 2, 3, 4, 5].forEach(batch => {
+                        callAI('exam', { subject, topic, batch })
+                            .then(qs => { addBatch(qs); resolve(); })
+                            .catch(e => { failures++; lastErr = e; if (failures === 5) reject(lastErr); })
+                            .finally(() => { if (--pending === 0) finishLoading(); });
+                    });
+                });
             } catch (err) {
                 console.error(err);
                 showToast(err.message || "৫০ টি প্রশ্ন তৈরিতে সমস্যা হয়েছে। পুনরায় চেষ্টা করুন।", "error");
@@ -874,11 +909,12 @@
         }
 
         // Render 50 Questions in Active Exam View
-        function renderExamQuestions() {
+        function renderExamQuestions(fromIndex = 0) {
             const container = document.getElementById('questions-list-wrapper');
-            container.innerHTML = '';
+            if (fromIndex === 0) container.innerHTML = '';
 
             APP_STATE.examQuestions.forEach((q, qIndex) => {
+                if (qIndex < fromIndex) return;
                 const qCard = document.createElement('div');
                 qCard.className = "bg-white p-6 rounded-2xl border border-slate-200 card-shadow space-y-4";
                 qCard.id = `q-card-${qIndex}`;
@@ -929,11 +965,12 @@
 
         function updateUnansweredCounter() {
             const answeredCount = Object.keys(APP_STATE.userAnswers).length;
-            const remaining = APP_STATE.examQuestions.length - answeredCount;
+            const remaining = Math.max(0, APP_STATE.expectedTotal - answeredCount);
             document.getElementById('unanswered-count').innerText = toBengaliNumerals(remaining);
         }
 
         function confirmSubmitExam() {
+            if (APP_STATE.loadingMore) { showToast('আরও প্রশ্ন লোড হচ্ছে, কয়েক সেকেন্ড অপেক্ষা করুন।', 'warning'); return; }
             const answeredCount = Object.keys(APP_STATE.userAnswers).length;
             const total = APP_STATE.examQuestions.length;
             if (answeredCount < total) {
@@ -946,6 +983,9 @@
 
         // Calculate and Process Results with Detailed Explanations
         function processExamResults() {
+            APP_STATE.examSession++;
+            APP_STATE.loadingMore = false;
+            document.getElementById('more-loading').classList.add('hidden');
             if (APP_STATE.examTimer) clearInterval(APP_STATE.examTimer);
 
             let correctCount = 0;
