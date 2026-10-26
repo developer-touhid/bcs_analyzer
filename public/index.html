@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <title>BCS Smart Topic Analyzer & 50-Mark MCQ Exam Engine</title>
+
+    <!-- Google Fonts for Clean Bengali Rendering -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Noto+Sans+Bengali:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Hind Siliguri', 'Noto Sans Bengali', 'sans-serif'],
+                        bengali: ['Noto Sans Bengali', 'sans-serif']
+                    },
+                    colors: {
+                        bcs: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#035485',
+                            800: '#075985',
+                            900: '#0c4a6e'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
+    <style>
+        body {
+            font-family: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .gradient-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0369a1 100%);
+        }
+
+        .card-shadow {
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+        }
+
+        /* Custom styling for options */
+        .option-card {
+            transition: all 0.2s ease;
+        }
+        .option-card:hover {
+            border-color: #0284c7;
+            background-color: #f0f9ff;
+        }
+        .option-card.selected {
+            border-color: #0284c7;
+            background-color: #e0f2fe;
+            box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+        }
+        .option-card.correct {
+            border-color: #16a34a !important;
+            background-color: #f0fdf4 !important;
+        }
+        .option-card.wrong {
+            border-color: #dc2626 !important;
+            background-color: #fef2f2 !important;
+        }
+
+        /* Pulse animation for timer warning */
+        @keyframes pulse-fast {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .pulse-warning {
+            animation: pulse-fast 1s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50">
+
+    <!-- Header Section -->
+    <header class="gradient-header text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center space-x-3 space-x-reverse">
+                    <div class="bg-sky-500/20 p-2.5 m-2.5 rounded-xl border border-sky-400/30 backdrop-blur-md">
+                        <i class="fa-solid fa-graduation-cap text-3xl text-sky-300"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                            BCS Smart Topic Analyzer <span class="text-xs bg-sky-500/30 text-sky-200 border border-sky-400/30 px-2 py-0.5 rounded-full font-normal">৩৫তম - ৫০তম বিসিএস</span>
+                        </h1>
+                        <p class="text-xs text-slate-300">স্মার্ট টপিক এনালাইসিস এবং ৫০ মার্কের তাৎক্ষণিক মডেল টেস্ট ইঞ্জিন</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <div class="flex bg-slate-800/80 p-1.5 rounded-xl border border-slate-700 w-full md:w-auto overflow-x-auto">
+                    <button id="tab-analyzer" onclick="switchTab('analyzer')" class="flex-1 md:flex-initial px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-sky-600 text-white shadow-sm">
+                        <i class="fa-solid fa-chart-pie"></i>
+                        <span>টপিক এনালাইজার</span>
+                    </button>
+                    <button id="tab-exam" onclick="switchTab('exam')" class="flex-1 md:flex-initial px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700/50">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        <span>৫০ মার্কের পরীক্ষা</span>
+                    </button>
+                    <button id="tab-history" onclick="switchTab('history')" class="flex-1 md:flex-initial px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700/50">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>হিস্ট্রি ও রেজাল্ট</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast-container" class="fixed top-20 right-5 z-50 flex flex-col gap-2 max-w-md w-full px-4 pointer-events-none"></div>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ==================== SECTION 1: TOPIC ANALYZER ==================== -->
+        <section id="section-analyzer" class="space-y-6">
+            
+            <!-- Subject and Topic Selection Card -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200/80 card-shadow">
+                <div class="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-sliders text-sky-600 text-lg"></i>
+                    <h2 class="text-lg font-bold text-slate-800">বিষয় ও টপিক নির্বাচন করুন</h2>
+                </div>
+
+                <form id="analyzer-form" onsubmit="handleAnalysisSubmit(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Subject Selection -->
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">বিষয় (Subject)</label>
+                            <select id="subject-select" onchange="validateSubjectTopicMismatch()" class="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all">
+                                <option value="বাংলা ভাষা ও সাহিত্য">বাংলা ভাষা ও সাহিত্য</option>
+                                <option value="English Language & Literature">English Language & Literature</option>
+                                <option value="বাংলাদেশ বিষয়াবলি">বাংলাদেশ বিষয়াবলি</option>
+                                <option value="আন্তর্জাতিক বিষয়াবলি">আন্তর্জাতিক বিষয়াবলি</option>
+                                <option value="গাণিতিক যুক্তি">গাণিতিক যুক্তি</option>
+                                <option value="মানসিক দক্ষতা">মানসিক দক্ষতা</option>
+                                <option value="সাধারণ বিজ্ঞান">সাধারণ বিজ্ঞান</option>
+                                <option value="কম্পিউটার ও তথ্যপ্রযুক্তি">কম্পিউটার ও তথ্যপ্রযুক্তি</option>
+                                <option value="ভূগোল, পরিবেশ ও দুর্যোগ ব্যবস্থাপনা">ভূগোল, পরিবেশ ও দুর্যোগ ব্যবস্থাপনা</option>
+                                <option value="নৈতিকতা, মূল্যবোধ ও সুশাসন">নৈতিকতা, মূল্যবোধ ও সুশাসন</option>
+                            </select>
+                        </div>
+
+                        <!-- Topic Input -->
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">টপিকের নাম (Topic Name)</label>
+                            <div class="relative">
+                                <input type="text" id="topic-input" maxlength="120" onkeyup="validateSubjectTopicMismatch()" placeholder="যেমন: Subject-Verb Agreement, সমাস, মুক্তিযুদ্ধের ইতিহাস..." class="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all pr-10" required>
+                                <span class="absolute right-3 top-3 text-slate-400">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mismatch Warning Box -->
+                    <div id="mismatch-warning" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-3 text-amber-800 text-sm">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-500 text-lg flex-shrink-0"></i>
+                        <span id="mismatch-warning-text">সতর্কতা: নির্বাচিত বিষয় এবং টপিকের মধ্যে গরমিল দেখা যাচ্ছে!</span>
+                    </div>
+
+                    <!-- Preset Chips -->
+                    <div>
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">জনপ্রিয় হট-টপিকস (Quick Presets):</span>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" onclick="setPreset('English Language & Literature', 'Subject-Verb Agreement')" class="bg-slate-100 hover:bg-sky-50 text-slate-700 hover:text-sky-700 text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:border-sky-300 transition-all">English: Subject-Verb Agreement</button>
+                            <button type="button" onclick="setPreset('বাংলা ভাষা ও সাহিত্য', 'সমাস ও ব্যাকরণ')" class="bg-slate-100 hover:bg-sky-50 text-slate-700 hover:text-sky-700 text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:border-sky-300 transition-all">বাংলা: সমাস</button>
+                            <button type="button" onclick="setPreset('বাংলাদেশ বিষয়াবলি', 'মুক্তিযুদ্ধ ও স্বাধীনতা')" class="bg-slate-100 hover:bg-sky-50 text-slate-700 hover:text-sky-700 text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:border-sky-300 transition-all">বাংলাদেশ: মুক্তিযুদ্ধ</button>
+                            <button type="button" onclick="setPreset('গাণিতিক যুক্তি', 'শতকরা ও লাভ-ক্ষতি')" class="bg-slate-100 hover:bg-sky-50 text-slate-700 hover:text-sky-700 text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:border-sky-300 transition-all">গণিত: শতকরা ও লাভ-ক্ষতি</button>
+                            <button type="button" onclick="setPreset('কম্পিউটার ও তথ্যপ্রযুক্তি', 'কম্পিউটার নেটওয়ার্ক ও সাইবার নিরাপত্তা')" class="bg-slate-100 hover:bg-sky-50 text-slate-700 hover:text-sky-700 text-xs px-3 py-1.5 rounded-lg border border-slate-200 hover:border-sky-300 transition-all">কম্পিউটার: নেটওয়ার্কিং</button>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 flex flex-col sm:flex-row gap-3">
+                        <button type="submit" id="btn-analyze" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-md shadow-sky-600/20">
+                            <i class="fa-solid fa-chart-line"></i>
+                            <span>টপিক এনালাইসিস শুরু করুন (৩৫-৫০তম বিসিএস)</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Loader State -->
+            <div id="analyzer-loading" class="hidden bg-white rounded-2xl p-12 text-center border border-slate-200/80 card-shadow">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-sky-600 border-t-transparent mb-4"></div>
+                <h3 class="text-lg font-bold text-slate-800">৩৫তম থেকে ৫০তম বিসিএস প্রশ্নব্যাংক বিশ্লেষণ করা হচ্ছে...</h3>
+                <p class="text-slate-500 text-sm mt-1">কৃত্রিম বুদ্ধিমত্তা দিয়ে বিগত বছরের হটস্পট, প্রশ্নের ধরণ এবং পিএসসি ট্র্যাপ খোঁজা হচ্ছে। অনুগ্রহ করে অপেক্ষা করুন।</p>
+            </div>
+
+            <!-- Analysis Dashboard Output -->
+            <div id="analyzer-results" class="hidden space-y-6">
+                <!-- Overview Header Card -->
+                <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span id="res-subject-badge" class="bg-sky-500/30 text-sky-200 border border-sky-400/30 text-xs px-2.5 py-1 rounded-md font-semibold">বিষয়</span>
+                            <span class="text-slate-400 text-xs">● ৩৫তম - ৫০তম বিসিএস এনালাইসিস</span>
+                        </div>
+                        <h2 id="res-topic-title" class="text-2xl font-bold text-white">টপিক শিরোনাম</h2>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <button onclick="startExamForCurrentTopic()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-5 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/30">
+                            <i class="fa-solid fa-file-pen text-lg"></i>
+                            <span>এই টপিকে ৫০ মার্কের পরীক্ষা দিন</span>
+                        </button>
+                        <button onclick="printAnalysis()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 py-2.5 px-3.5 rounded-xl transition-all" title="প্রিন্ট / PDF সংরক্ষণ">
+                            <i class="fa-solid fa-print"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Metrics Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 card-shadow">
+                        <div class="text-slate-500 text-xs font-semibold mb-1">গুরুত্ব স্তর (Importance)</div>
+                        <div class="flex items-center justify-between">
+                            <span id="res-importance" class="text-xl font-bold text-emerald-600">উচ্চ (High)</span>
+                            <i class="fa-solid fa-fire text-amber-500 text-2xl"></i>
+                        </div>
+                        <p id="res-importance-desc" class="text-xs text-slate-500 mt-2">বিগত ১০টি বিসিএস পরীক্ষায় প্রায় নিয়মিত প্রশ্ন এসেছে।</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 card-shadow">
+                        <div class="text-slate-500 text-xs font-semibold mb-1">গড় নম্বর বরাদ্দ (Avg Marks)</div>
+                        <div class="flex items-center justify-between">
+                            <span id="res-avg-marks" class="text-xl font-bold text-sky-600">২ - ৩ নম্বর</span>
+                            <i class="fa-solid fa-chart-column text-sky-500 text-2xl"></i>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2">প্রতি প্রিলিমিনারিতে নির্ধারিত গড় মার্কস।</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 card-shadow">
+                        <div class="text-slate-500 text-xs font-semibold mb-1">টাইপ বিভাজন (Conceptual vs Memory)</div>
+                        <div class="flex items-center justify-between">
+                            <span id="res-type-ratio" class="text-xl font-bold text-indigo-600">৬০% বুঝে / ৪০% মুখস্থ</span>
+                            <i class="fa-solid fa-brain text-indigo-500 text-2xl"></i>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2">প্রশ্ন উত্তরের ধারণাগত বনাম মুখস্থ নির্ভরতা।</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 card-shadow">
+                        <div class="text-slate-500 text-xs font-semibold mb-1">ঝুঁকি ও ফাঁদ (PSC Trap Level)</div>
+                        <div class="flex items-center justify-between">
+                            <span id="res-trap-level" class="text-xl font-bold text-rose-600">মাঝারি-উচ্চ</span>
+                            <i class="fa-solid fa-triangle-exclamation text-rose-500 text-2xl"></i>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2">কনফিউজিং অপশন দেওয়ার প্রবণতা।</p>
+                    </div>
+                </div>
+
+                <!-- Deep Analysis Content -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Hotspots & Trend Analysis -->
+                    <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 card-shadow space-y-6">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2 mb-3">
+                                <i class="fa-solid fa-bullseye text-rose-500"></i>
+                                <span>বিগত বিসিএসের প্রধান হটস্পটসমূহ (Core Focus Areas)</span>
+                            </h3>
+                            <ul id="res-hotspots-list" class="space-y-2 text-sm text-slate-700">
+                                <!-- Dynamic List -->
+                            </ul>
+                        </div>
+
+                        <div class="border-t border-slate-100 pt-5">
+                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2 mb-3">
+                                <i class="fa-solid fa-masks-theater text-amber-500"></i>
+                                <span>পিএসসি এর কমন ট্র্যাপ ও কনফিউশন (PSC Traps)</span>
+                            </h3>
+                            <div id="res-psc-traps" class="bg-amber-50/60 border border-amber-200/80 rounded-xl p-4 text-sm text-slate-700 space-y-2">
+                                <!-- Dynamic Text -->
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-100 pt-5">
+                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2 mb-3">
+                                <i class="fa-solid fa-lightbulb text-emerald-500"></i>
+                                <span>প্রস্তুতির সেরা কৌশল (Study Strategy)</span>
+                            </h3>
+                            <p id="res-study-strategy" class="text-sm text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <!-- Dynamic Content -->
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Recommended References & Exam CTA Box -->
+                    <div class="space-y-6">
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 card-shadow">
+                            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2 mb-3">
+                                <i class="fa-solid fa-book-bookmark text-sky-600"></i>
+                                <span>সুপারিশকৃত রিভিশন সোর্স</span>
+                            </h3>
+                            <ul id="res-references" class="space-y-2 text-sm text-slate-600">
+                                <!-- Dynamic references -->
+                            </ul>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-sky-900 to-indigo-900 text-white p-6 rounded-2xl shadow-lg border border-sky-700 text-center space-y-4">
+                            <div class="inline-block bg-sky-500/20 p-3 rounded-full border border-sky-400/30">
+                                <i class="fa-solid fa-stopwatch text-3xl text-sky-300"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold">প্রস্তুতি পরীক্ষা করুন</h3>
+                                <p class="text-xs text-sky-200 mt-1">এনালাইসিসকৃত টপিক থেকে ৫০ টি MCQ এর রিয়েল-টাইম মডেল টেস্ট শুরু করুন।</p>
+                            </div>
+                            <button onclick="startExamForCurrentTopic()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-md flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-play"></i>
+                                <span>৫০ মার্কের এক্সাম স্টার্ট করুন</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== SECTION 2: 50-MARK MCQ EXAM ENGINE ==================== -->
+        <section id="section-exam" class="hidden space-y-6">
+            
+            <!-- Exam Intro / Configuration Screen -->
+            <div id="exam-config-card" class="bg-white rounded-2xl p-6 border border-slate-200/80 card-shadow">
+                <div class="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-file-pen text-emerald-600 text-lg"></i>
+                    <h2 class="text-lg font-bold text-slate-800">৫০ মার্কের বিসিএস মডেল টেস্ট সেটআপ</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">পরীক্ষার বিষয়</label>
+                        <select id="exam-subject-select" class="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="বাংলা ভাষা ও সাহিত্য">বাংলা ভাষা ও সাহিত্য</option>
+                            <option value="English Language & Literature">English Language & Literature</option>
+                            <option value="বাংলাদেশ বিষয়াবলি">বাংলাদেশ বিষয়াবলি</option>
+                            <option value="আন্তর্জাতিক বিষয়াবলি">আন্তর্জাতিক বিষয়াবলি</option>
+                            <option value="গাণিতিক যুক্তি">গাণিতিক যুক্তি</option>
+                            <option value="মানসিক দক্ষতা">মানসিক দক্ষতা</option>
+                            <option value="সাধারণ বিজ্ঞান">সাধারণ বিজ্ঞান</option>
+                            <option value="কম্পিউটার ও তথ্যপ্রযুক্তি">কম্পিউটার ও তথ্যপ্রযুক্তি</option>
+                            <option value="ভূগোল, পরিবেশ ও দুর্যোগ ব্যবস্থাপনা">ভূগোল, পরিবেশ ও দুর্যোগ ব্যবস্থাপনা</option>
+                            <option value="নৈতিকতা, মূল্যবোধ ও সুশাসন">নৈতিকতা, মূল্যবোধ ও সুশাসন</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">পরীক্ষার টপিক</label>
+                        <input type="text" id="exam-topic-input" maxlength="120" placeholder="যেমন: সমাস, কারক, Subject-Verb Agreement..." class="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500" required>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6 space-y-2 text-xs text-slate-600">
+                    <div class="font-bold text-slate-700 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-sky-600"></i>
+                        <span>পরীক্ষার নির্দেশাবলী:</span>
+                    </div>
+                    <ul class="list-disc list-inside space-y-1 pl-1">
+                        <li>মোট প্রশ্ন: <b>৫০ টি (MCQ)</b> | মোট নম্বর: <b>৫০</b></li>
+                        <li>সময়সীমা: <b>৩৫ মিনিট</b> (বিসিএস প্রিলিমিনারি টাইমিং স্ট্যান্ডার্ড)</li>
+                        <li>প্রতিটি ভুল উত্তরের জন্য <b>০.৫০</b> নেগেটিভ মার্কিং হিসাব করা হবে।</li>
+                        <li>সাবমিট করার সাথে সাথেই সঠিক উত্তর ও বিস্তারিত ব্যাখ্যা (Explanation) দেখতে পাবেন।</li>
+                    </ul>
+                </div>
+
+                <button onclick="generateAndStartExam()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 text-base">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>৫০টি প্রশ্নের সেট তৈরি করুন ও পরীক্ষা শুরু করুন</span>
+                </button>
+            </div>
+
+            <!-- Loader State for Exam Generation -->
+            <div id="exam-loading" class="hidden bg-white rounded-2xl p-12 text-center border border-slate-200/80 card-shadow">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-600 border-t-transparent mb-4"></div>
+                <h3 class="text-lg font-bold text-slate-800">৫০ টি স্ট্যান্ডার্ড বিসিএস প্রশ্ন ও ব্যাখ্যা তৈরি করা হচ্ছে...</h3>
+                <p class="text-slate-500 text-sm mt-1">কৃত্রিম বুদ্ধিমত্তা ৩৫তম-৫০তম বিসিএসের ধরণ অনুসরণ করে ৫০টি মানসম্মত এমসিকিউ প্রস্তুত করছে। এটি কয়েক মুহূর্ত সময় নিতে পারে।</p>
+            </div>
+
+            <!-- Active Exam Screen Container -->
+            <div id="exam-active-container" class="hidden space-y-6">
+                <!-- Sticky Top Timer & Progress Banner -->
+                <div class="sticky top-20 z-40 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-4 card-shadow flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-emerald-100 text-emerald-800 p-2.5 rounded-xl font-bold">
+                            <i class="fa-solid fa-clipboard-question text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 id="exam-active-title" class="font-bold text-slate-800 text-base">বিসিএস ৫০ মার্কস মডেল টেস্ট</h3>
+                            <p id="exam-active-subtitle" class="text-xs text-slate-500">উত্তর বাকি: <span id="unanswered-count" class="font-bold text-sky-600">৫০</span>/৫০</p>
+                        </div>
+                    </div>
+
+                    <!-- Timer Badge -->
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl text-lg font-mono font-bold tracking-wider">
+                            <i class="fa-regular fa-clock text-amber-400"></i>
+                            <span id="exam-timer-display">৩৫:০০</span>
+                        </div>
+
+                        <button onclick="confirmSubmitExam()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-5 rounded-xl transition-all shadow-md text-sm">
+                            পরীক্ষা শেষ করুন
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Questions List Container -->
+                <div id="questions-list-wrapper" class="space-y-6">
+                    <!-- Dynamic 50 Questions injected here -->
+                </div>
+
+                <!-- Bottom Floating Submit Bar -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 flex justify-between items-center card-shadow">
+                    <div class="text-sm text-slate-600">
+                        সকল প্রশ্নের উত্তর দেওয়া সম্পন্ন হলে সাবমিট করুন।
+                    </div>
+                    <button onclick="confirmSubmitExam()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-md text-base">
+                        সাবমিট করুন ও রেজাল্ট দেখুন
+                    </button>
+                </div>
+            </div>
+
+            <!-- Exam Result Dashboard Screen -->
+            <div id="exam-result-container" class="hidden space-y-6">
+                <!-- Score Summary Header -->
+                <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-8 rounded-2xl shadow-xl space-y-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-700/80 pb-6">
+                        <div>
+                            <span id="res-badge-status" class="bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">
+                                ফলাফল সম্পন্ন
+                            </span>
+                            <h2 class="text-2xl font-bold mt-2 text-white">পরীক্ষার ফলাফল ও মূল্যায়ন</h2>
+                            <p id="res-exam-meta" class="text-xs text-slate-300 mt-1">বিষয়: ... | টপিক: ...</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs text-slate-400">অর্জিত মার্কস</div>
+                            <div class="text-4xl font-extrabold text-emerald-400" id="res-obtained-score">0.00 / 50</div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Breakdown Stats -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 text-center">
+                            <div class="text-xs text-slate-400">সঠিক উত্তর</div>
+                            <div class="text-2xl font-bold text-emerald-400 mt-1" id="res-correct-count">0</div>
+                        </div>
+                        <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 text-center">
+                            <div class="text-xs text-slate-400">ভুল উত্তর</div>
+                            <div class="text-2xl font-bold text-rose-400 mt-1" id="res-wrong-count">0</div>
+                        </div>
+                        <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 text-center">
+                            <div class="text-xs text-slate-400">নেগেটিভ মার্কস</div>
+                            <div class="text-2xl font-bold text-amber-400 mt-1" id="res-negative-marks">0.00</div>
+                        </div>
+                        <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 text-center">
+                            <div class="text-xs text-slate-400">পারফরম্যান্স ব্যাজ</div>
+                            <div class="text-sm font-bold text-sky-300 mt-2" id="res-performance-badge">চমৎকার</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Answer Key Header -->
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-key text-sky-600"></i>
+                        <span>উত্তরপত্র ও বিস্তারিত ব্যাখ্যা (Detailed Explanations)</span>
+                    </h3>
+                    <button onclick="retakeExam()" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded-xl transition-all text-sm">
+                        পুনরায় পরীক্ষা দিন
+                    </button>
+                </div>
+
+                <!-- Answer Key Review List -->
+                <div id="answer-key-wrapper" class="space-y-6">
+                    <!-- Dynamic reviewed questions injected here -->
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ==================== SECTION 3: HISTORY & SAVED RESULTS ==================== -->
+        <section id="section-history" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl p-6 border border-slate-200 card-shadow">
+                <div class="flex justify-between items-center mb-6 pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-sky-600 text-lg"></i>
+                        <h2 class="text-lg font-bold text-slate-800">সংরক্ষিত এনালাইসিস ও এক্সাম রেকর্ডস</h2>
+                    </div>
+                    <button onclick="clearAllHistory()" class="text-xs text-rose-600 hover:text-rose-800 font-semibold px-3 py-1.5 rounded-lg border border-rose-200 hover:bg-rose-50 transition-all">
+                        সকল হিস্ট্রি মুছে ফেলুন
+                    </button>
+                </div>
+
+                <!-- History Items List -->
+                <div id="history-items-list" class="space-y-4">
+                    <!-- Dynamic History Entries -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-6 border-t border-slate-800 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+            <p>BCS Smart Topic Analyzer & 50-Mark MCQ Exam Engine | ৩৫তম - ৫০তম বিসিএস স্ট্যান্ডার্ড</p>
+            <p class="text-slate-500">Specialized AI দ্বারা চালিত রিয়েল-টাইম প্রশ্ন বিশ্লেষণ ও ব্যাখ্যা সার্ভিস</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Global Application State
+        const APP_STATE = {
+            currentTab: 'analyzer',
+            currentTopicData: null,
+            examQuestions: [],
+            userAnswers: {},
+            examTimer: null,
+            timeRemainingSec: 35 * 60, // 35 Minutes
+            examMeta: { subject: '', topic: '' }
+        };
+
+        // Standard Subject to Keywords Map for Validation
+        const SUBJECT_KEYWORDS = {
+            'বাংলা ভাষা ও সাহিত্য': ['সমাস', 'কারক', 'প্রত্যয়', 'সন্ধি', 'ব্যাকরণ', 'রবীন্দ্রনাথ', 'নজরুল', 'উপন্যাস', 'চর্যাপদ', 'সাহিত্য', 'ছন্দ'],
+            'English Language & Literature': ['agreement', 'verb', 'preposition', 'idiom', 'phrase', 'shakespeare', 'literature', 'grammar', 'correction', 'tense', 'parts of speech', 'synonym', 'antonym'],
+            'বাংলাদেশ বিষয়াবলি': ['মুক্তিযুদ্ধ', 'সংবিধান', 'বঙ্গবন্ধু', 'অর্থনীতি', 'বাজেট', 'শুমারি', 'কৃষি', 'ভূপ্রকৃতি', 'ইতিহাস', 'প্রাচীনকাল'],
+            'আন্তর্জাতিক বিষয়াবলি': ['জাতিসংঘ', 'চুক্তি', 'সংস্থা', 'ভূরাজনীতি', 'যুদ্ধ', 'সম্মেলন', 'আন্তর্জাতিক', 'সংগঠন'],
+            'গাণিতিক যুক্তি': ['শতকরা', 'লাভ-ক্ষতি', 'অনুপাত', 'বীজগণিত', 'জ্যামিতি', 'সমীকরণ', 'ধারা', 'সূচক', 'লগারিদম', 'সংখ্যা'],
+            'মানসিক দক্ষতা': ['চিত্র', 'সিরিজ', 'কোডিং', 'রক্তের সম্পর্ক', 'দিক নির্ণয়', 'আইকিউ', 'যুক্তি'],
+            'সাধারণ বিজ্ঞান': ['আলো', 'শব্দ', 'তরঙ্গ', 'রসায়ন', 'জৈব', 'পদার্থ', 'কোষ', 'ডিএনএ', 'ভিটামিন', 'রোগ'],
+            'কম্পিউটার ও তথ্যপ্রযুক্তি': ['নেটওয়ার্ক', 'মেমোরি', 'বাইনারি', 'সাইবার', 'সফটওয়্যার', 'হার্ডওয়্যার', 'ইন্টারনেট', 'প্রোগ্রামিং'],
+            'ভূগোল, পরিবেশ ও দুর্যোগ ব্যবস্থাপনা': ['জলবায়ু', 'ভূমিকম্প', 'দুর্যোগ', 'মানচিত্র', 'বায়ুমণ্ডল', 'পরিবেশ'],
+            'নৈতিকতা, মূল্যবোধ ও সুশাসন': ['সুশাসন', 'নৈতিকতা', 'মূল্যবোধ', 'প্লেটো', 'এরিস্টটল', 'আইন']
+        };
+
+        // Security helpers
+        function esc(v) {
+            return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+        function loadHistory() {
+            try {
+                const h = loadHistory();
+                return Array.isArray(h) ? h.filter(x => x && typeof x === 'object') : [];
+            } catch (e) { return []; }
+        }
+        function storeHistory(h) {
+            try { localStorage.setItem('bcs_analyzer_history', JSON.stringify(h.slice(0, 20))); } catch (e) { /* storage full/blocked */ }
+        }
+
+        // Helper: Convert English Digits to Bengali
+        function toBengaliNumerals(str) {
+            if (str === null || str === undefined) return '';
+            const bangaliDigits = {'0':'০', '1':'১', '2':'২', '3':'৩', '4':'৪', '5':'৫', '6':'৬', '7':'৭', '8':'৮', '9':'৯'};
+            return str.toString().replace(/[0-9]/g, w => bangaliDigits[w]);
+        }
+
+        // Toast Notification System
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bgClass = type === 'warning' ? 'bg-amber-600' : type === 'error' ? 'bg-rose-600' : 'bg-slate-800';
+            const icon = type === 'warning' ? 'fa-triangle-exclamation' : type === 'error' ? 'fa-circle-xmark' : 'fa-circle-info';
+
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 border border-white/10 text-sm transform transition-all duration-300 translate-x-10 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span></span>`;
+            toast.querySelector("span").textContent = String(message);
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-x-10', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-x-10', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Tab Switching Logic
+        function switchTab(tab) {
+            APP_STATE.currentTab = tab;
+            
+            // Hide all sections
+            document.getElementById('section-analyzer').classList.add('hidden');
+            document.getElementById('section-exam').classList.add('hidden');
+            document.getElementById('section-history').classList.add('hidden');
+
+            // Reset tab button styles
+            ['analyzer', 'exam', 'history'].forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                btn.className = "flex-1 md:flex-initial px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 text-slate-300 hover:text-white hover:bg-slate-700/50";
+            });
+
+            // Activate chosen tab
+            document.getElementById(`section-${tab}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tab}`);
+            activeBtn.className = "flex-1 md:flex-initial px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-sky-600 text-white shadow-sm";
+
+            if (tab === 'history') {
+                renderHistoryList();
+            }
+        }
+
+        // Set Preset Chips
+        function setPreset(subject, topic) {
+            document.getElementById('subject-select').value = subject;
+            document.getElementById('topic-input').value = topic;
+            validateSubjectTopicMismatch();
+        }
+
+        // Subject & Topic Mismatch Validation
+        function validateSubjectTopicMismatch() {
+            const subject = document.getElementById('subject-select').value;
+            const topic = document.getElementById('topic-input').value.trim().toLowerCase();
+            const warningBox = document.getElementById('mismatch-warning');
+            const warningText = document.getElementById('mismatch-warning-text');
+
+            if (!topic) {
+                warningBox.classList.add('hidden');
+                return false;
+            }
+
+            // Check if topic contains keywords belonging to OTHER subjects
+            let probableSubject = null;
+            for (const [sub, keywords] of Object.entries(SUBJECT_KEYWORDS)) {
+                if (sub !== subject) {
+                    if (keywords.some(kw => topic.includes(kw.toLowerCase()))) {
+                        probableSubject = sub;
+                        break;
+                    }
+                }
+            }
+
+            if (probableSubject) {
+                warningText.innerText = `সতর্কতা: প্রবেশ করানো টপিকটি (${topic}) দৃশ্যত "${probableSubject}" বিষয়ের সাথে সম্পর্কিত! অনুগ্রহ করে সঠিক বিষয় নির্বাচন করুন।`;
+                warningBox.classList.remove('hidden');
+                return true;
+            } else {
+                warningBox.classList.add('hidden');
+                return false;
+            }
+        }
+
+        // API client: talks only to our own /api/ai endpoint (the Gemini key lives on the server)
+        async function callAI(task, payload, { retries = 2, timeoutMs = 28000 } = {}) {
+            let lastErr;
+            for (let i = 0; i <= retries; i++) {
+                const ctrl = new AbortController();
+                const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+                try {
+                    const res = await fetch('/api/ai', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ task, ...payload }),
+                        signal: ctrl.signal
+                    });
+                    const out = await res.json().catch(() => null);
+                    if (res.ok && out && out.ok) return out.data;
+                    lastErr = new Error((out && out.message) || ('HTTP ' + res.status));
+                    lastErr.status = res.status;
+                    if (res.status < 500 && res.status !== 429) throw lastErr; // client errors: don't retry
+                } catch (e) {
+                    lastErr = e;
+                    if (e.status && e.status < 500 && e.status !== 429) throw e;
+                } finally { clearTimeout(timer); }
+                if (i < retries) await new Promise(r => setTimeout(r, 1500 * Math.pow(2, i)));
+            }
+            throw lastErr;
+        }
+
+        // Handle Analysis Form Submission
+        async function handleAnalysisSubmit(e) {
+            e.preventDefault();
+            if (APP_STATE.busy) return;
+            const subject = document.getElementById('subject-select').value;
+            const topic = document.getElementById('topic-input').value.trim();
+
+            if (!topic) {
+                showToast("অনুগ্রহ করে একটি টপিক নির্বাচন করুন", "warning");
+                return;
+            }
+
+            if (validateSubjectTopicMismatch()) {
+                showToast("বিষয় ও টপিকের মধ্যে অমিল রয়েছে! সতর্কতা দেখুন।", "warning");
+            }
+
+            APP_STATE.busy = true;
+            document.getElementById('analyzer-loading').classList.remove('hidden');
+            document.getElementById('analyzer-results').classList.add('hidden');
+
+            try {
+                const analysisResult = await callAI('analyze', { subject, topic });
+                APP_STATE.currentTopicData = { subject, topic, ...analysisResult };
+                renderAnalysisResults(subject, topic, analysisResult);
+                saveAnalysisToHistory(subject, topic, analysisResult);
+            } catch (err) {
+                console.error(err);
+                showToast(err.message || "এনালাইসিস করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।", "error");
+            } finally {
+                document.getElementById('analyzer-loading').classList.add('hidden');
+                APP_STATE.busy = false;
+            }
+        }
+
+        // Render Analysis Results
+        function renderAnalysisResults(subject, topic, data) {
+            document.getElementById('res-subject-badge').innerText = subject;
+            document.getElementById('res-topic-title').innerText = topic;
+            document.getElementById('res-importance').innerText = data.importance || 'উচ্চ';
+            document.getElementById('res-importance-desc').innerText = data.importance_desc || '';
+            document.getElementById('res-avg-marks').innerText = data.avg_marks || '১-২ নম্বর';
+            document.getElementById('res-type-ratio').innerText = data.conceptual_vs_memory || '৫০% বুঝে / ৫০% মুখস্থ';
+            document.getElementById('res-trap-level').innerText = data.trap_level || 'মাঝারি';
+
+            // Hotspots list
+            const hotspotContainer = document.getElementById('res-hotspots-list');
+            hotspotContainer.innerHTML = '';
+            (data.hotspots || []).forEach(item => {
+                const li = document.createElement('li');
+                li.className = "flex items-start gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200/60";
+                li.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500 mt-1 flex-shrink-0"></i> <span></span>`;
+                li.querySelector("span").textContent = String(item);
+                hotspotContainer.appendChild(li);
+            });
+
+            document.getElementById('res-psc-traps').innerText = data.psc_traps || '';
+            document.getElementById('res-study-strategy').innerText = data.study_strategy || '';
+
+            // References list
+            const refContainer = document.getElementById('res-references');
+            refContainer.innerHTML = '';
+            (data.references || []).forEach(ref => {
+                const li = document.createElement('li');
+                li.className = "flex items-center gap-2";
+                li.innerHTML = `<i class="fa-solid fa-book-open text-sky-500"></i> <span></span>`;
+                li.querySelector("span").textContent = String(ref);
+                refContainer.appendChild(li);
+            });
+
+            document.getElementById('analyzer-results').classList.remove('hidden');
+            document.getElementById('analyzer-results').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Quick CTA to Exam from Analyzer
+        function startExamForCurrentTopic() {
+            if (!APP_STATE.currentTopicData) return;
+            document.getElementById('exam-subject-select').value = APP_STATE.currentTopicData.subject;
+            document.getElementById('exam-topic-input').value = APP_STATE.currentTopicData.topic;
+            switchTab('exam');
+            generateAndStartExam();
+        }
+
+        // ==================== EXAM ENGINE LOGIC ====================
+
+        async function generateAndStartExam() {
+            const subject = document.getElementById('exam-subject-select').value;
+            const topic = document.getElementById('exam-topic-input').value.trim();
+
+            if (!topic) {
+                showToast("অনুগ্রহ করে পরীক্ষার টপিক প্রদান করুন", "warning");
+                return;
+            }
+
+            if (APP_STATE.busy) return;
+            APP_STATE.busy = true;
+            APP_STATE.examMeta = { subject, topic };
+
+            document.getElementById('exam-config-card').classList.add('hidden');
+            document.getElementById('exam-loading').classList.remove('hidden');
+            document.getElementById('exam-active-container').classList.add('hidden');
+            document.getElementById('exam-result-container').classList.add('hidden');
+
+            try {
+                const settled = await Promise.allSettled([1, 2, 3, 4, 5].map(batch => callAI('exam', { subject, topic, batch })));
+                const seen = new Set();
+                const questions = settled.filter(s => s.status === 'fulfilled').flatMap(s => s.value)
+                    .filter(q => !seen.has(q.question) && seen.add(q.question))
+                    .map((q, i) => ({ ...q, id: i + 1 }));
+                if (questions.length < 25) {
+                    const why = settled.find(s => s.status === 'rejected');
+                    throw new Error(why ? why.reason.message : 'Invalid questions format returned');
+                }
+                if (questions.length < 50) showToast(`${toBengaliNumerals(questions.length)} টি প্রশ্ন তৈরি হয়েছে (বাকিগুলো পাওয়া যায়নি)।`, 'warning');
+
+                APP_STATE.examQuestions = questions;
+                APP_STATE.userAnswers = {};
+                
+                startExamUI();
+            } catch (err) {
+                console.error(err);
+                showToast(err.message || "৫০ টি প্রশ্ন তৈরিতে সমস্যা হয়েছে। পুনরায় চেষ্টা করুন।", "error");
+                document.getElementById('exam-config-card').classList.remove('hidden');
+            } finally {
+                document.getElementById('exam-loading').classList.add('hidden');
+                APP_STATE.busy = false;
+            }
+        }
+
+        // Start active exam UI & Timer
+        function startExamUI() {
+            document.getElementById('exam-active-container').classList.remove('hidden');
+            document.getElementById('exam-active-title').innerText = `${APP_STATE.examMeta.topic} - ৫০ মার্কস বিসিএস মডেল টেস্ট`;
+            
+            renderExamQuestions();
+
+            // Reset Timer to 35 Minutes
+            APP_STATE.timeRemainingSec = 35 * 60;
+            updateTimerDisplay();
+
+            if (APP_STATE.examTimer) clearInterval(APP_STATE.examTimer);
+
+            APP_STATE.examTimer = setInterval(() => {
+                APP_STATE.timeRemainingSec--;
+                updateTimerDisplay();
+
+                if (APP_STATE.timeRemainingSec <= 0) {
+                    clearInterval(APP_STATE.examTimer);
+                    showToast("সময় শেষ! আপনার উত্তরপত্র স্বয়ংক্রিয়ভাবে সাবমিট হচ্ছে...", "warning");
+                    processExamResults();
+                }
+            }, 1000);
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(APP_STATE.timeRemainingSec / 60);
+            const seconds = APP_STATE.timeRemainingSec % 60;
+            const displayStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            const timerEl = document.getElementById('exam-timer-display');
+            timerEl.innerText = toBengaliNumerals(displayStr);
+
+            if (APP_STATE.timeRemainingSec <= 300) { // last 5 mins warning
+                timerEl.classList.add('text-rose-400', 'pulse-warning');
+            } else {
+                timerEl.classList.remove('text-rose-400', 'pulse-warning');
+            }
+        }
+
+        // Render 50 Questions in Active Exam View
+        function renderExamQuestions() {
+            const container = document.getElementById('questions-list-wrapper');
+            container.innerHTML = '';
+
+            APP_STATE.examQuestions.forEach((q, qIndex) => {
+                const qCard = document.createElement('div');
+                qCard.className = "bg-white p-6 rounded-2xl border border-slate-200 card-shadow space-y-4";
+                qCard.id = `q-card-${qIndex}`;
+
+                const bnNum = toBengaliNumerals(qIndex + 1);
+
+                qCard.innerHTML = `
+                    <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-sky-100 text-sky-800 font-bold text-xs px-2.5 py-1 rounded-lg">প্রশ্ন ${bnNum}</span>
+                            <h4 class="font-bold text-slate-800 text-base leading-snug">${esc(q.question)}</h4>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                        ${q.options.map((opt, optIndex) => `
+                            <label onclick="selectAnswer(${qIndex}, ${optIndex})" class="option-card border border-slate-200 p-3.5 rounded-xl cursor-pointer flex items-center gap-3 transition-all">
+                                <input type="radio" name="question_${qIndex}" value="${optIndex}" class="w-4 h-4 text-sky-600 focus:ring-sky-500">
+                                <span class="text-sm text-slate-700 font-medium">${esc(opt)}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+
+                container.appendChild(qCard);
+            });
+
+            updateUnansweredCounter();
+        }
+
+        // User Option Selection Event
+        function selectAnswer(qIndex, optIndex) {
+            APP_STATE.userAnswers[qIndex] = optIndex;
+
+            // Highlight selected option visually
+            const qCard = document.getElementById(`q-card-${qIndex}`);
+            const labels = qCard.querySelectorAll('label');
+            labels.forEach((lbl, idx) => {
+                if (idx === optIndex) {
+                    lbl.classList.add('selected');
+                } else {
+                    lbl.classList.remove('selected');
+                }
+            });
+
+            updateUnansweredCounter();
+        }
+
+        function updateUnansweredCounter() {
+            const answeredCount = Object.keys(APP_STATE.userAnswers).length;
+            const remaining = APP_STATE.examQuestions.length - answeredCount;
+            document.getElementById('unanswered-count').innerText = toBengaliNumerals(remaining);
+        }
+
+        function confirmSubmitExam() {
+            const answeredCount = Object.keys(APP_STATE.userAnswers).length;
+            const total = APP_STATE.examQuestions.length;
+            if (answeredCount < total) {
+                if (!confirm(`আপনি ${toBengaliNumerals(total)} টির মধ্যে ${toBengaliNumerals(answeredCount)} টি প্রশ্নের উত্তর দিয়েছেন। এখনো ${toBengaliNumerals(total - answeredCount)} টি বাকি রয়েছে। আপনি কি নিশ্চিত সাবমিট করতে চান?`)) {
+                    return;
+                }
+            }
+            processExamResults();
+        }
+
+        // Calculate and Process Results with Detailed Explanations
+        function processExamResults() {
+            if (APP_STATE.examTimer) clearInterval(APP_STATE.examTimer);
+
+            let correctCount = 0;
+            let wrongCount = 0;
+
+            APP_STATE.examQuestions.forEach((q, index) => {
+                const userAns = APP_STATE.userAnswers[index];
+                if (userAns !== undefined) {
+                    if (userAns === q.correct_index) {
+                        correctCount++;
+                    } else {
+                        wrongCount++;
+                    }
+                }
+            });
+
+            const negativeMarks = wrongCount * 0.50;
+            const obtainedScore = Math.max(0, correctCount - negativeMarks);
+
+            // Display Statistics
+            document.getElementById('res-obtained-score').innerText = `${toBengaliNumerals(obtainedScore.toFixed(2))} / ৫০`;
+            document.getElementById('res-correct-count').innerText = toBengaliNumerals(correctCount);
+            document.getElementById('res-wrong-count').innerText = toBengaliNumerals(wrongCount);
+            document.getElementById('res-negative-marks').innerText = toBengaliNumerals(negativeMarks.toFixed(2));
+            document.getElementById('res-exam-meta').innerText = `বিষয়: ${APP_STATE.examMeta.subject} | টপিক: ${APP_STATE.examMeta.topic}`;
+
+            // Performance Badge Evaluation
+            let badgeText = "আরও রিভিশন প্রয়োজন";
+            let badgeColor = "bg-rose-500/20 text-rose-300 border-rose-400/30";
+
+            if (obtainedScore >= 40) {
+                badgeText = "চমৎকার প্রস্তুতি (Top Performer)";
+                badgeColor = "bg-emerald-500/20 text-emerald-300 border-emerald-400/30";
+            } else if (obtainedScore >= 30) {
+                badgeText = "ভালো প্রস্তুতি (Good Pass)";
+                badgeColor = "bg-sky-500/20 text-sky-300 border-sky-400/30";
+            } else if (obtainedScore >= 20) {
+                badgeText = "গড় প্রস্তুতি (Needs Revision)";
+                badgeColor = "bg-amber-500/20 text-amber-300 border-amber-400/30";
+            }
+
+            const badgeEl = document.getElementById('res-performance-badge');
+            badgeEl.innerText = badgeText;
+
+            renderAnswerKeyReview();
+
+            // Switch Screen Views
+            document.getElementById('exam-active-container').classList.add('hidden');
+            document.getElementById('exam-result-container').classList.remove('hidden');
+
+            // Save Exam Result to Local Storage
+            saveExamToHistory(APP_STATE.examMeta.subject, APP_STATE.examMeta.topic, obtainedScore, correctCount, wrongCount);
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Render Reviewed Answer Key with Step-by-Step Bengali Explanations
+        function renderAnswerKeyReview() {
+            const container = document.getElementById('answer-key-wrapper');
+            container.innerHTML = '';
+
+            APP_STATE.examQuestions.forEach((q, qIndex) => {
+                const userAns = APP_STATE.userAnswers[qIndex];
+                const isCorrect = userAns === q.correct_index;
+                const isSkipped = userAns === undefined;
+
+                const card = document.createElement('div');
+                card.className = `bg-white p-6 rounded-2xl border ${isCorrect ? 'border-emerald-200' : isSkipped ? 'border-slate-200' : 'border-rose-200'} card-shadow space-y-4`;
+
+                const bnNum = toBengaliNumerals(qIndex + 1);
+
+                let statusBadge = `<span class="bg-emerald-100 text-emerald-800 font-bold text-xs px-2.5 py-1 rounded-lg flex items-center gap-1"><i class="fa-solid fa-check"></i> সঠিক উত্তর</span>`;
+                if (!isCorrect && !isSkipped) {
+                    statusBadge = `<span class="bg-rose-100 text-rose-800 font-bold text-xs px-2.5 py-1 rounded-lg flex items-center gap-1"><i class="fa-solid fa-xmark"></i> ভুল উত্তর</span>`;
+                } else if (isSkipped) {
+                    statusBadge = `<span class="bg-slate-100 text-slate-600 font-bold text-xs px-2.5 py-1 rounded-lg">উত্তর দেওয়া হয়নি</span>`;
+                }
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-slate-100 text-slate-800 font-bold text-xs px-2.5 py-1 rounded-lg">প্রশ্ন ${bnNum}</span>
+                            <h4 class="font-bold text-slate-800 text-base leading-snug">${esc(q.question)}</h4>
+                        </div>
+                        <div>${statusBadge}</div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                        ${q.options.map((opt, optIdx) => {
+                            let optClass = "border border-slate-200 p-3.5 rounded-xl flex items-center justify-between text-sm";
+                            let icon = "";
+
+                            if (optIdx === q.correct_index) {
+                                optClass += " correct font-bold text-emerald-900";
+                                icon = `<i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>`;
+                            } else if (optIdx === userAns && !isCorrect) {
+                                optClass += " wrong font-bold text-rose-900";
+                                icon = `<i class="fa-solid fa-circle-xmark text-rose-600 text-base"></i>`;
+                            } else {
+                                optClass += " text-slate-600";
+                            }
+
+                            return `
+                                <div class="${optClass}">
+                                    <span>${esc(opt)}</span>
+                                    ${icon}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <!-- Step-by-Step Detailed Explanation Box -->
+                    <div class="bg-sky-50/70 border border-sky-200/80 rounded-xl p-4 space-y-1.5 mt-2">
+                        <div class="text-xs font-bold text-sky-900 flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-info text-sky-600"></i>
+                            <span>বিসিএস স্ট্যান্ডার্ড ব্যাখ্যা (Detailed Explanation):</span>
+                        </div>
+                        <p class="text-sm text-slate-700 leading-relaxed">${esc(q.explanation || 'ব্যাখ্যা উপলব্ধ নেই।')}</p>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function retakeExam() {
+            document.getElementById('exam-result-container').classList.add('hidden');
+            document.getElementById('exam-config-card').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Print Analysis Helper
+        function printAnalysis() {
+            window.print();
+        }
+
+        // LOCAL STORAGE HISTORY MANAGEMENT
+
+        function saveAnalysisToHistory(subject, topic, data) {
+            const history = loadHistory();
+            const entry = {
+                id: Date.now(),
+                type: 'analysis',
+                subject,
+                topic,
+                date: new Date().toLocaleDateString('bn-BD'),
+                data
+            };
+            history.unshift(entry);
+            storeHistory(history);
+        }
+
+        function saveExamToHistory(subject, topic, score, correct, wrong) {
+            const history = loadHistory();
+            const entry = {
+                id: Date.now(),
+                type: 'exam',
+                subject,
+                topic,
+                date: new Date().toLocaleDateString('bn-BD'),
+                score,
+                correct,
+                wrong
+            };
+            history.unshift(entry);
+            storeHistory(history);
+        }
+
+        function renderHistoryList() {
+            const container = document.getElementById('history-items-list');
+            const history = loadHistory();
+
+            if (history.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-slate-400">
+                        <i class="fa-solid fa-folder-open text-4xl mb-3"></i>
+                        <p>কোনো সংরক্ষিত হিস্ট্রি পাওয়া যায়নি।</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            history.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-3";
+
+                if (item.type === 'analysis') {
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="bg-sky-100 text-sky-800 text-xs px-2 py-0.5 rounded font-semibold">টপিক এনালাইসিস</span>
+                                <span class="text-xs text-slate-400">${esc(item.date)}</span>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-base mt-1">${esc(item.topic)} (${esc(item.subject)})</h4>
+                        </div>
+                        <button data-load class="bg-sky-600 text-white text-xs px-3 py-2 rounded-lg font-semibold hover:bg-sky-700 transition-all">
+                            রিপোর্ট দেখুন
+                        </button>
+                    `;
+                } else {
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded font-semibold">৫০ মার্কস পরীক্ষা</span>
+                                <span class="text-xs text-slate-400">${esc(item.date)}</span>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-base mt-1">${esc(item.topic)} (${esc(item.subject)})</h4>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-lg font-extrabold text-emerald-600">${toBengaliNumerals(Number(item.score).toFixed(2))} / ৫০</span>
+                            <div class="text-xs text-slate-500">সঠিক: ${toBengaliNumerals(Number(item.correct) || 0)} | ভুল: ${toBengaliNumerals(Number(item.wrong) || 0)}</div>
+                        </div>
+                    `;
+                }
+
+                const loadBtn = card.querySelector('[data-load]');
+                if (loadBtn) loadBtn.addEventListener('click', () => loadSavedAnalysis(item));
+                container.appendChild(card);
+            });
+        }
+
+        function loadSavedAnalysis(item) {
+            const data = (item && item.data && typeof item.data === 'object') ? item.data : {};
+            const subject = String(item.subject || ''), topic = String(item.topic || '');
+            APP_STATE.currentTopicData = { subject, topic, ...data };
+            switchTab('analyzer');
+            renderAnalysisResults(subject, topic, data);
+        }
+
+        function clearAllHistory() {
+            if (confirm("আপনি কি নিশ্চিত সমস্ত হিস্ট্রি মুছে ফেলতে চান?")) {
+                localStorage.removeItem('bcs_analyzer_history');
+                renderHistoryList();
+                showToast("সমস্ত হিস্ট্রি মুছে ফেলা হয়েছে", "info");
+            }
+        }
+    </script>
+</body>
+</html>
