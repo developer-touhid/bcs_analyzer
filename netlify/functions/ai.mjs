@@ -80,7 +80,14 @@ async function callGemini(apiKey, prompt) {
     return { err: timeout ? fail(504, "UPSTREAM_TIMEOUT", "এআই সার্ভার সময়মতো উত্তর দেয়নি। আবার চেষ্টা করুন।") : fail(502, "UPSTREAM_ERROR", "এআই সার্ভারে সংযোগ করা যায়নি।") };
   }
   if (res.status === 429) return { err: fail(429, "RATE_LIMITED", "অনুরোধ সীমা ছাড়িয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।") };
-  if (!res.ok) { console.error("Gemini HTTP", res.status); return { err: fail(502, "UPSTREAM_ERROR", "এআই সার্ভার ত্রুটি দিয়েছে।") }; }
+  if (!res.ok) {
+    const detail = String((await res.json().catch(() => null))?.error?.message || "").slice(0, 160);
+    console.error("Gemini HTTP", res.status, detail);
+    const hint = res.status === 404 ? "মডেল পাওয়া যায়নি — GEMINI_MODEL চেক করুন।"
+      : [400, 401, 403].includes(res.status) ? "API key সঠিক নয় বা অনুমতি নেই — GEMINI_API_KEY চেক করুন।"
+      : "এআই সার্ভার ত্রুটি দিয়েছে।";
+    return { err: fail(502, "UPSTREAM_ERROR", `${hint} [Google ${res.status}: ${detail}]`) };
+  }
   const data = await res.json();
   const text = data?.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
   try { return { json: JSON.parse(text.replace(/^```json|```$/g, "").trim()) }; }
