@@ -62,7 +62,7 @@ function validateQuestions(a) {
 }
 
 async function callGemini(apiKey, prompt) {
-  const model = Netlify.env.get("GEMINI_MODEL") || "gemini-3.8-flash-lite";
+  const model = Netlify.env.get("GEMINI_MODEL") || "gemini-3.5-flash-lite";
   let res;
   try {
     res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
